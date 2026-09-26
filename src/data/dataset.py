@@ -1,138 +1,78 @@
 import os
 import numpy as np
 
-
 class WaveDataset:
-
-
-    def __init__(
-            self,
-            data_root
-    ):
-
-        self.data_root=data_root
-
-        self.samples=[]
-
+    def __init__(self, data_root):
+        self.data_root = data_root
+        self.samples = []
         self.load()
 
-
     def load(self):
-
-        """
-        读取所有.dat文件
-        """
-
-        for speed_folder in os.listdir(
-            self.data_root
-        ):
-
-
-            if not speed_folder.startswith(
-                "dat_u"
-            ):
+        """读取所有.dat文件"""
+        for speed_folder in os.listdir(self.data_root):
+            if not speed_folder.startswith("dat_u"):
                 continue
-
-
-            # 提取速度
-
-            V=float(
-                speed_folder.replace(
-                    "dat_u",
-                    ""
-                )
-            )
-
-
-            speed_path=os.path.join(
-                self.data_root,
-                speed_folder
-            )
-
-
-            for file in os.listdir(speed_path):
-
-
-                if not file.endswith(
-                    ".dat"
-                ):
+            V = float(speed_folder.replace("dat_u", ""))
+            folder = os.path.join(self.data_root, speed_folder)
+            for file in os.listdir(folder):
+                if not file.endswith(".dat"):
                     continue
-
-
-                # 提取深度
-
-                H=float(
-                    file.replace(
-                        "suboff_h",
-                        ""
-                    )
-                    .replace(
-                        ".dat",
-                        ""
-                    )
-                )
-
-
-                filepath=os.path.join(
-                    speed_path,
-                    file
-                )
-
-
-                X,Y,Z=self.read_dat(
-                    filepath
-                )
-
-
+                H = float(file.replace("suboff_h", "").replace(".dat", ""))
+                filepath = os.path.join(folder, file)
+                X, Y, Z = self.read_tecplot(filepath)
                 self.samples.append({
-
-                    "V":V,
-
-                    "H":H,
-
-                    "X":X,
-
-                    "Y":Y,
-
-                    "Z":Z
-
+                    "V": V,
+                    "H": H,
+                    "X": X,
+                    "Y": Y,
+                    "Z": Z
                 })
+        print("Loaded samples:", len(self.samples))
 
+    def read_tecplot(self, filepath):
+        """读取Tecplot ASCII格式dat"""
+        with open(filepath, "r") as f:
+            lines = f.readlines()
+        data_start = None
+        for i, line in enumerate(lines):
+            if line.strip().startswith("DT="):
+                data_start = i + 1
+                break
+        if data_start is None:
+            raise ValueError("Cannot find data section")
 
-        print(
-            f"Loaded {len(self.samples)} samples"
-        )
-
-
-
-    def read_dat(
-            self,
-            filepath
-    ):
-
-
-        data=np.loadtxt(
-            filepath
-        )
-
-
-        X=data[:,0]
-
-        Y=data[:,1]
-
-        Z=data[:,2]
-
-
-        return X,Y,Z
-
-
+        data = []
+        for line in lines[data_start:]:
+            line = line.strip()
+            if line == "":
+                continue
+            values = line.split()
+            if len(values) == 3:
+                data.append([float(values[0]), float(values[1]), float(values[2])])
+        data = np.array(data)
+        X = data[:, 0]
+        Y = data[:, 1]
+        Z = data[:, 2]
+        return X, Y, Z
 
     def __len__(self):
-
         return len(self.samples)
 
-
-
-    def __getitem__(self,index):
-
+    def __getitem__(self, index):
         return self.samples[index]
+
+dataset=WaveDataset("data/raw/Train")
+sample=dataset[0]
+print(sample["V"])
+print(sample["H"])
+print(sample["X"].shape)
+print(sample["Y"].shape)
+print(sample["Z"].shape)
+import matplotlib.pyplot as plt
+sample=dataset[1]
+Z_grid=sample["Z"].reshape(180,300)
+plt.figure(figsize=(10,4))
+plt.imshow(Z_grid, origin="lower")
+plt.colorbar()
+plt.title(f"V={sample['V']} H={sample['H']}")
+plt.show()

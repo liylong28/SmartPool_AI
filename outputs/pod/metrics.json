@@ -1,0 +1,19 @@
+{
+    "n_samples": 132,
+    "n_features": 54000,
+    "nx": 300,
+    "ny": 180,
+    "solver": "svd",
+    "center": false,
+    "energy_threshold": 0.99,
+    "n_modes": 11,
+    "retained_energy": 0.9906013135924141,
+    "global_relative_l2_percent": 9.69468225760181,
+    "mean_sample_relative_l2_percent": 11.361124520031694,
+    "median_sample_relative_l2_percent": 8.132961084208567,
+    "max_sample_relative_l2_percent": 52.57431463711602,
+    "min_sample_relative_l2_percent": 4.419759991610524,
+    "rmse": 0.0013531003629360379,
+    "mae": 0.0008264090124896589,
+    "max_abs_error": 0.0399047040978628
+}
